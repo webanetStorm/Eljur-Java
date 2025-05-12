@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/navigation_schedule"
+        android:icon="@drawable/ic_schedule"
+        android:title="@string/title_schedule" />
+    <item
+        android:id="@+id/navigation_grades"
+        android:icon="@drawable/ic_grades"
+        android:title="@string/title_grades" />
+    <item
+        android:id="@+id/navigation_assignments"
+        android:icon="@drawable/ic_assignments"
+        android:title="@string/title_assignments" />
+    <item
+        android:id="@+id/navigation_profile"
+        android:icon="@drawable/ic_profile"
+        android:title="@string/title_profile" />
+</menu>
