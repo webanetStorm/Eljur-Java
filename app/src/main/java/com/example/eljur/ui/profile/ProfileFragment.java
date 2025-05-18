@@ -29,6 +29,7 @@ public class ProfileFragment extends Fragment
 
         final TextView textView = binding.textProfile;
         dashboardViewModel.getText().observe( getViewLifecycleOwner(), textView::setText );
+
         return root;
     }
 

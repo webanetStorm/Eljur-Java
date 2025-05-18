@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Navigation">
+        <item name="android:background">@color/grey_500</item>
+    </style>
+
+    <style name="ScheduleCard">
+        <item name="cardBackgroundColor">@color/grey_500</item>
+        <item name="cardCornerRadius">15dp</item>
+        <item name="cardElevation">0dp</item>
+    </style>
+
+    <style name="SubjectText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="DefaultText">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="BreakText">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="GradeBlock">
+        <item name="android:layout_width">60dp</item>
+        <item name="android:layout_height">60dp</item>
+        <item name="android:background">@drawable/bg_grade_block</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <style name="GradeText">
+        <item name="android:textSize">20sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+
+</resources>

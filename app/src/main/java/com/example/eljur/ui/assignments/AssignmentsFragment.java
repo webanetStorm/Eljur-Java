@@ -29,6 +29,7 @@ public class AssignmentsFragment extends Fragment
 
         final TextView textView = binding.textAssignments;
         homeViewModel.getText().observe( getViewLifecycleOwner(), textView::setText );
+
         return root;
     }
 

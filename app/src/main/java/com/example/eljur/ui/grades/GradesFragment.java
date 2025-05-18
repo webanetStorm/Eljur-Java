@@ -29,6 +29,7 @@ public class GradesFragment extends Fragment
 
         final TextView textView = binding.textGrades;
         notificationsViewModel.getText().observe( getViewLifecycleOwner(), textView::setText );
+
         return root;
     }
 

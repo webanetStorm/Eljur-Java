@@ -11,6 +11,8 @@ import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
+import androidx.navigation.fragment.NavHostFragment;
+
 import com.example.eljur.databinding.ActivityMainBinding;
 
 
@@ -31,8 +33,12 @@ public class MainActivity extends AppCompatActivity
         BottomNavigationView navView = findViewById( R.id.nav_view );
 
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder( R.id.navigation_schedule, R.id.navigation_grades, R.id.navigation_assignments, R.id.navigation_profile ).build();
-        NavController navController = Navigation.findNavController( this, R.id.nav_host_fragment_activity_main );
-        NavigationUI.setupActionBarWithNavController( this, navController, appBarConfiguration );
+        //NavController navController = Navigation.findNavController( this, R.id.nav_host_fragment_activity_main );
+        getSupportActionBar().hide();
+        // NavigationUI.setupWithNavController( binding.navView, navController );
+
+        NavHostFragment navHost = (NavHostFragment)getSupportFragmentManager().findFragmentById( R.id.nav_host_fragment_activity_main );
+        NavController navController = navHost.getNavController();
         NavigationUI.setupWithNavController( binding.navView, navController );
     }
 
