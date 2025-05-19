@@ -1,0 +1,4 @@
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/white" android:drawable="@drawable/ic_profile_active" android:state_checked="true" />
+    <item android:color="@color/grey_200" android:drawable="@drawable/ic_profile" />
+</selector>

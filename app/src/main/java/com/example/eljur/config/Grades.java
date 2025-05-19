@@ -9,13 +9,10 @@ import java.util.Map;
 public class Grades
 {
 
-    private static final Map<LocalDate, Map<String, List<String>>> grades =
-        Map.of(
-            LocalDate.of( 2025, 9, 1 ), Map.of(
-                "Математика", List.of( "5", "4" ),
-                "Русский язык", List.of( "5" )
-            )
-        );
+    private static final Map<LocalDate, Map<String, List<String>>> grades = Map.of(
+        LocalDate.of( 2025, 9, 1 ),
+        Map.of( "Математика", List.of( "5", "4" ), "Русский язык", List.of( "5" ) )
+    );
 
 
     public static List<String> get( LocalDate date, String subject )

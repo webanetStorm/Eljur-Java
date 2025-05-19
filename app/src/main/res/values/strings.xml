@@ -4,4 +4,6 @@
     <string name="title_grades">Оценки</string>
     <string name="title_assignments">Задания</string>
     <string name="title_profile">Профиль</string>
+    <string name="avatar_desc">Аватар пользователя</string>
+
 </resources>
