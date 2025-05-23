@@ -1,99 +1,90 @@
 package com.example.eljur.adapter;
 
 
-import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eljur.R;
 import com.example.eljur.model.schedule.Day;
 
+import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 
-public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayVH>
+public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder>
 {
 
-    public interface OnDayClick
+    private final List<Day> days;
+
+
+    public DayAdapter( List<Day> days )
     {
-
-        void onClick( int weekIndex, int dayIndex );
-
+        this.days = days;
     }
 
-    private final List<List<Day>> weeks;
-
-    private final OnDayClick cb;
-
-    private final int itemW;
-
-    private int selectedWeek, selectedDay;
-
-
-    public DayAdapter( List<List<Day>> w, OnDayClick cb, ViewGroup parent )
+    @NonNull
+    @Override
+    public DayViewHolder onCreateViewHolder( @NonNull ViewGroup parent, int viewType )
     {
-        this.weeks = w;
-        this.cb = cb;
-        DisplayMetrics dm = parent.getContext().getResources().getDisplayMetrics();
-        itemW = dm.widthPixels / 7;
+        return new DayViewHolder( LayoutInflater.from( parent.getContext() ).inflate( R.layout.item_day, parent, false ) );
     }
 
     @Override
-    public DayVH onCreateViewHolder( ViewGroup p, int viewType )
+    public void onBindViewHolder( @NonNull DayViewHolder holder, int position )
     {
-        View v2 = LayoutInflater.from( p.getContext() ).inflate( R.layout.item_day, p, false );
-        v2.getLayoutParams().width = itemW;
-        return new DayVH( v2 );
-    }
+        Day item = days.get( position );
+        LocalDate date = item.getDate();
 
-    @Override
-    public void onBindViewHolder( DayVH h, int pos )
-    {
-        Day d = weeks.get( selectedWeek ).get( pos );
-        h.tvDate.setText( d.date );
-        int cnt = 0;
-        for ( var s : d.items ) if ( s instanceof com.example.eljur.model.schedule.Lesson ) cnt++;
-        h.tvLessonCount.setText( "●".repeat( cnt ) );
-        h.itemView.setAlpha( pos == selectedDay ? 1f : 0.6f );
-        h.itemView.setOnClickListener( v ->
+        holder.tvDayName.setText( date.getDayOfWeek().getDisplayName( TextStyle.SHORT_STANDALONE, new Locale( "ru" ) ).toUpperCase() );
+        holder.tvDayDate.setText( String.valueOf( date.getDayOfMonth() ) );
+
+        StringBuilder dots = new StringBuilder();
+
+        for ( int i = 0; i < item.getLessonCount(); i++ )
         {
-            int adapterPos = h.getAdapterPosition();
-            if ( adapterPos == RecyclerView.NO_POSITION ) return;
-            selectedDay = adapterPos;
-            notifyDataSetChanged();
-            cb.onClick( selectedWeek, selectedDay );
-        } );
+            dots.append( "●" );
+        }
+
+        holder.tvLessonCount.setText( dots.toString() );
+
+        if ( date.equals( LocalDate.now() ) )
+        {
+            holder.vDateOverlay.setVisibility( View.VISIBLE );
+        }
+        else
+        {
+            holder.vDateOverlay.setVisibility( View.GONE );
+        }
     }
 
     @Override
     public int getItemCount()
     {
-        return 7;
+        return days.size();
     }
 
-    public void setWeek( int w )
-    {
-        selectedWeek = w;
-        selectedDay = 0;
-        notifyDataSetChanged();
-    }
-
-    static class DayVH extends RecyclerView.ViewHolder
+    public static class DayViewHolder extends RecyclerView.ViewHolder
     {
 
-        TextView tvDate;
+        public TextView tvDayName, tvDayDate, tvLessonCount;
 
-        TextView tvLessonCount;
+        public View vDateOverlay;
 
-        DayVH( View v )
+
+        public DayViewHolder( @NonNull View itemView )
         {
-            super( v );
-            tvDate = v.findViewById( R.id.tvDayDate );
-            tvLessonCount = v.findViewById( R.id.tvLessonCount );
+            super( itemView );
+            tvDayName = itemView.findViewById( R.id.tvDayName );
+            tvDayDate = itemView.findViewById( R.id.tvDayDate );
+            tvLessonCount = itemView.findViewById( R.id.tvLessonCount );
+            vDateOverlay = itemView.findViewById( R.id.vDateOverlay );
         }
 
     }

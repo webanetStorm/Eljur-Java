@@ -2,80 +2,72 @@ package com.example.eljur.ui.schedule;
 
 
 import android.os.Bundle;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
+import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.example.eljur.adapter.DayAdapter;
-import com.example.eljur.adapter.ScheduleAdapter;
-import com.example.eljur.config.Config;
-import com.example.eljur.model.schedule.Day;
 import com.example.eljur.databinding.FragmentScheduleBinding;
+import com.example.eljur.model.schedule.Day;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.temporal.TemporalAdjusters;
+import java.util.ArrayList;
 import java.util.List;
 
 
 public class ScheduleFragment extends Fragment
 {
 
-    private FragmentScheduleBinding b;
-
-    private List<List<Day>> weeks;
-
-    private int currentWeek = 0, currentDay = 0;
+    private FragmentScheduleBinding binding;
 
 
     @Override
-    public View onCreateView( LayoutInflater inflater, ViewGroup c, Bundle s )
+    public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
     {
-        b = FragmentScheduleBinding.inflate( inflater, c, false );
-        weeks = Config.getAllWeeks();
-        var dayAdapter = new DayAdapter( weeks, ( w, d ) ->
-        {
-            currentWeek = w;
-            currentDay = d;
-            load();
-        }, b.rvDays );
-        b.rvDays.setLayoutManager( new LinearLayoutManager( requireContext(), LinearLayoutManager.HORIZONTAL, false ) );
-        b.rvDays.setAdapter( dayAdapter );
-        b.rvSchedule.setLayoutManager( new LinearLayoutManager( requireContext() ) );
-        dayAdapter.setWeek( currentWeek );
-        load();
-        var gd = new GestureDetector( requireContext(), new GestureDetector.SimpleOnGestureListener()
-        {
-            @Override
-            public boolean onFling( MotionEvent e1, MotionEvent e2, float vx, float vy )
-            {
-                if ( Math.abs( vx ) > 1000 )
-                {
-                    if ( vx < 0 && currentWeek < weeks.size() - 1 ) currentWeek++;
-                    if ( vx > 0 && currentWeek > 0 ) currentWeek--;
-                    dayAdapter.setWeek( currentWeek );
-                    load();
-                    return true;
-                }
-                return false;
-            }
-        } );
-        b.getRoot().setOnTouchListener( ( v, e ) -> gd.onTouchEvent( e ) );
-        return b.getRoot();
+        binding = FragmentScheduleBinding.inflate( inflater, container, false );
+
+        setupWeekCalendar();
+
+        return binding.getRoot();
     }
 
-    private void load()
+    private void setupWeekCalendar()
     {
-        b.rvSchedule.setAdapter( new ScheduleAdapter( weeks.get( currentWeek ).get( currentDay ).items ) );
+        binding.rvDays.setLayoutManager( new GridLayoutManager( getContext(), 7 ) );
+        binding.rvDays.setAdapter( new DayAdapter( generateCurrentWeek() ) );
+    }
+
+    private List<Day> generateCurrentWeek()
+    {
+        LocalDate today = LocalDate.now();
+        LocalDate monday = today.with( TemporalAdjusters.previousOrSame( DayOfWeek.MONDAY ) );
+        List<Day> list = new ArrayList<>();
+
+        for ( int i = 0; i < 7; i++ )
+        {
+            LocalDate date = monday.plusDays( i );
+            list.add( new Day( date, fetchLessonCount( date ) ) );
+        }
+
+        return list;
+    }
+
+    private int fetchLessonCount( LocalDate date )
+    {
+        return 0;
     }
 
     @Override
     public void onDestroyView()
     {
         super.onDestroyView();
-        b = null;
+        binding = null;
     }
 
 }

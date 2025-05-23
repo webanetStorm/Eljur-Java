@@ -2,25 +2,30 @@ package com.example.eljur.model.schedule;
 
 
 import java.time.LocalDate;
-import java.util.List;
 
 
 public class Day
 {
 
-    public final String name, date;
+    private final LocalDate date;
 
-    public final List<Schedule> items;
-
-    public final LocalDate realDate;
+    private final int lessonCount;
 
 
-    public Day( String name, String date, List<Schedule> items, LocalDate rd )
+    public Day( LocalDate date, int lessonCount )
     {
-        this.name = name;
         this.date = date;
-        this.items = items;
-        this.realDate = rd;
+        this.lessonCount = lessonCount;
+    }
+
+    public LocalDate getDate()
+    {
+        return date;
+    }
+
+    public int getLessonCount()
+    {
+        return lessonCount;
     }
 
 }
