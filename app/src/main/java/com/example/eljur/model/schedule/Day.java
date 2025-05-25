@@ -9,7 +9,7 @@ public class Day
 
     private final LocalDate date;
 
-    private final int lessonCount;
+    private int lessonCount;
 
 
     public Day( LocalDate date, int lessonCount )
@@ -26,6 +26,11 @@ public class Day
     public int getLessonCount()
     {
         return lessonCount;
+    }
+
+    public void setLessonCount( int count )
+    {
+        lessonCount = count;
     }
 
 }

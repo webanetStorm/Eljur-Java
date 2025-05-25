@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
     style="@style/ScheduleCard"
     android:layout_width="match_parent"
@@ -17,22 +18,24 @@
 
             <TextView
                 android:id="@+id/tvTime"
+                style="@style/DefaultText"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1" />
 
             <TextView
                 android:id="@+id/tvRoom"
+                style="@style/DefaultText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content" />
-
         </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginTop="8dp">
+            android:layout_marginTop="8dp"
+            android:baselineAligned="true"
+            android:orientation="horizontal">
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -42,29 +45,30 @@
 
                 <TextView
                     android:id="@+id/tvSubject"
+                    style="@style/SubjectText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
 
                 <TextView
                     android:id="@+id/tvTeacher"
+                    style="@style/DefaultText"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
-
             </LinearLayout>
 
             <LinearLayout
                 android:id="@+id/llGrades"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:gravity="center_vertical"
                 android:orientation="horizontal" />
-
         </LinearLayout>
 
         <TextView
             android:id="@+id/tvHomework"
+            style="@style/DefaultText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp" />
-
     </LinearLayout>
 </androidx.cardview.widget.CardView>

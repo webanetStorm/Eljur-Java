@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eljur.R;
@@ -21,12 +22,25 @@ import java.util.Locale;
 public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder>
 {
 
+    public interface OnDayClickListener
+    {
+
+        void onDayClick( LocalDate date );
+
+    }
+
+
+    private OnDayClickListener listener;
+
+    private LocalDate selectedDate;
+
     private final List<Day> days;
 
 
-    public DayAdapter( List<Day> days )
+    public DayAdapter( List<Day> days, OnDayClickListener listener )
     {
         this.days = days;
+        this.listener = listener;
     }
 
     @NonNull
@@ -41,9 +55,21 @@ public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder>
     {
         Day item = days.get( position );
         LocalDate date = item.getDate();
+        int dayOfWeek = date.getDayOfWeek().getValue();
 
         holder.tvDayName.setText( date.getDayOfWeek().getDisplayName( TextStyle.SHORT_STANDALONE, new Locale( "ru" ) ).toUpperCase() );
         holder.tvDayDate.setText( String.valueOf( date.getDayOfMonth() ) );
+
+        holder.tvDayDate.setText(String.valueOf(date.getDayOfMonth()));
+
+        if ( dayOfWeek == 6 || dayOfWeek == 7 )
+        {
+            holder.tvDayDate.setTextColor( ContextCompat.getColor( holder.itemView.getContext(), R.color.red ) );
+        }
+        else
+        {
+            holder.tvDayDate.setTextColor( ContextCompat.getColor( holder.itemView.getContext(), R.color.white ) );
+        }
 
         StringBuilder dots = new StringBuilder();
 
@@ -54,20 +80,36 @@ public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder>
 
         holder.tvLessonCount.setText( dots.toString() );
 
-        if ( date.equals( LocalDate.now() ) )
+        if ( date.equals( selectedDate ) )
         {
             holder.vDateOverlay.setVisibility( View.VISIBLE );
+            holder.tvDayDate.setTextColor( ContextCompat.getColor( holder.itemView.getContext(), R.color.white ) );
         }
         else
         {
             holder.vDateOverlay.setVisibility( View.GONE );
         }
+
+        holder.itemView.setOnClickListener( v ->
+        {
+            if ( listener != null )
+            {
+                listener.onDayClick( item.getDate() );
+                setSelectedDate( item.getDate() );
+            }
+        } );
     }
 
     @Override
     public int getItemCount()
     {
         return days.size();
+    }
+
+    public void setSelectedDate( LocalDate date )
+    {
+        this.selectedDate = date;
+        notifyDataSetChanged();
     }
 
     public static class DayViewHolder extends RecyclerView.ViewHolder
