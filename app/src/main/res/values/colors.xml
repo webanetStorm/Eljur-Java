@@ -6,8 +6,9 @@
     <color name="grey_100">#D9D9D9</color>
     <color name="grey_200">#909196</color>
     <color name="grey_300">#939393</color>
-    <color name="grey_400">#2E2D32</color>
-    <color name="grey_500">#252527</color>
+    <color name="grey_400">#38373C</color>
+    <color name="grey_500">#2E2D32</color>
+    <color name="grey_600">#252527</color>
     <color name="grey_700">#0D0D0F</color>
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>

@@ -2,11 +2,11 @@
 <resources>
 
     <style name="Navigation">
-        <item name="android:background">@color/grey_500</item>
+        <item name="android:background">@color/grey_600</item>
     </style>
 
     <style name="ScheduleCard">
-        <item name="cardBackgroundColor">@color/grey_500</item>
+        <item name="cardBackgroundColor">@color/grey_600</item>
         <item name="cardCornerRadius">15dp</item>
         <item name="cardElevation">0dp</item>
     </style>
@@ -30,7 +30,7 @@
     <style name="GradeBlock">
         <item name="android:layout_width">60dp</item>
         <item name="android:layout_height">60dp</item>
-        <item name="android:background">@drawable/bg_grade_block</item>
+        <item name="android:background">@drawable/bg_grade_frame</item>
         <item name="android:gravity">center</item>
     </style>
 
@@ -41,7 +41,7 @@
     </style>
 
     <style name="AppBottomNav" parent="Widget.MaterialComponents.BottomNavigationView">
-        <item name="android:background">@color/grey_400</item>
+        <item name="android:background">@color/grey_500</item>
         <item name="itemIconTint">@color/nav_item_color_selector</item>
         <item name="itemTextColor">@color/nav_item_color_selector</item>
         <item name="labelVisibilityMode">labeled</item>
