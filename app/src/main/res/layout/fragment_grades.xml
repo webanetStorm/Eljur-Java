@@ -4,14 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/grey_700"
-    android:orientation="vertical"
-    android:padding="8dp">
+    android:orientation="vertical">
 
     <RadioGroup
         android:id="@+id/periodSelector"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="8dp"
+        android:layout_margin="8dp"
         android:background="@drawable/bg_toggle"
         android:gravity="center"
         android:orientation="horizontal" />
@@ -20,6 +19,8 @@
         android:id="@+id/viewModeSelector"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginLeft="8dp"
+        android:layout_marginRight="8dp"
         android:background="@drawable/bg_toggle"
         android:gravity="center"
         android:orientation="horizontal">
@@ -39,8 +40,7 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvGrades"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="12dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
         android:clipToPadding="false" />
 </LinearLayout>

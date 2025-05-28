@@ -81,36 +81,20 @@ public class ScheduleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             }
 
             lessonHolder.grades.removeAllViews();
+            LayoutInflater inflater = LayoutInflater.from( holder.itemView.getContext() );
+
             for ( Grade grade : item.getGrades() )
             {
-                FrameLayout gradeFrame = new FrameLayout( holder.itemView.getContext() );
+                View gradeBlock = inflater.inflate( R.layout.item_grade_block, lessonHolder.grades, false );
 
-                LinearLayout.LayoutParams params = new LinearLayout.LayoutParams( (int)TypedValue.applyDimension( TypedValue.COMPLEX_UNIT_DIP, 60, holder.itemView.getResources().getDisplayMetrics() ), (int)TypedValue.applyDimension( TypedValue.COMPLEX_UNIT_DIP, 60, holder.itemView.getResources().getDisplayMetrics() ) );
-                params.setMarginStart( 16 );
-                gradeFrame.setLayoutParams( params );
-                gradeFrame.setBackgroundResource( R.drawable.bg_grade_frame );
+                TextView tvValue = gradeBlock.findViewById( R.id.tvGradeValue );
+                TextView tvWeight = gradeBlock.findViewById( R.id.tvGradeWeight );
 
-                TextView gradeText = new TextView( holder.itemView.getContext() );
-                gradeText.setText( String.valueOf( grade.getValue() ) );
-                gradeText.setTextSize( 20 );
-                gradeText.setTypeface( null, Typeface.BOLD );
-                gradeText.setTextColor( ContextCompat.getColor( holder.itemView.getContext(), R.color.white ) );
-                gradeText.setGravity( Gravity.CENTER );
-                gradeText.setLayoutParams( new FrameLayout.LayoutParams( ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT ) );
-                gradeFrame.addView( gradeText );
+                tvValue.setText( String.valueOf( grade.getValue() ) );
+                tvWeight.setText( String.valueOf( grade.getWeight() ) );
 
-                TextView weightView = new TextView( holder.itemView.getContext() );
-                weightView.setText( String.valueOf( grade.getWeight() ) );
-                weightView.setTextSize( 12 );
-                weightView.setTextColor( ContextCompat.getColor( holder.itemView.getContext(), R.color.white ) );
-                FrameLayout.LayoutParams weightParams = new FrameLayout.LayoutParams( ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, Gravity.BOTTOM | Gravity.END );
-                weightParams.setMargins( 0, 0, 16, 8 );
-                weightView.setLayoutParams( weightParams );
-                gradeFrame.addView( weightView );
-
-                lessonHolder.grades.addView( gradeFrame );
+                lessonHolder.grades.addView( gradeBlock );
             }
-
 
             lessonHolder.grades.setVisibility( item.getGrades().isEmpty() ? View.GONE : View.VISIBLE );
         }

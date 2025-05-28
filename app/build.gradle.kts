@@ -36,6 +36,7 @@ android {
 
 dependencies {
     implementation(libs.cardview)
+    implementation(libs.flexbox)
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.constraintlayout)

@@ -48,6 +48,7 @@ public class ScheduleFragment extends Fragment
 
     private LocalDate selectedDate = LocalDate.now();
 
+
     @Override
     public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
     {
@@ -83,6 +84,7 @@ public class ScheduleFragment extends Fragment
         {
             return input;
         }
+
         return input.substring( 0, 1 ).toUpperCase() + input.substring( 1 );
     }
 
