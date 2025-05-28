@@ -94,17 +94,11 @@ public class ScheduleFragment extends Fragment
         {
             if ( cursor.moveToFirst() )
             {
-                int termNumber = cursor.getInt( 0 );
-
-                if ( termNumber == 99 )
-                {
-                    return "Каникулы";
-                }
-
-                return termNumber + " триместр";
+                return cursor.getInt( 0 ) + " триместр";
             }
         }
-        return "Вне учебного периода";
+
+        return "Неучебный период";
     }
 
     public boolean isDateAllowed( LocalDate date )

@@ -4,9 +4,7 @@ package com.example.eljur.model;
 public class Grade
 {
 
-    private final int value;
-
-    private final int weight;
+    private final int value, weight;
 
 
     public Grade( int value, int weight )

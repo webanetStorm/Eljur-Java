@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     private static final String DATABASE_NAME = "eljur.db";
 
-    private static final int DATABASE_VERSION = 14;
+    private static final int DATABASE_VERSION = 17;
 
     private final Context context;
 
