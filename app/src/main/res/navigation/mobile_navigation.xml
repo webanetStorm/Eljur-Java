@@ -12,21 +12,20 @@
         tools:layout="@layout/fragment_schedule" />
 
     <fragment
-        android:id="@+id/navigation_assignments"
-        android:name="com.example.eljur.ui.assignments.AssignmentsFragment"
-        android:label="@string/title_assignments"
-        tools:layout="@layout/fragment_assignments" />
-
-    <fragment
         android:id="@+id/navigation_grades"
         android:name="com.example.eljur.ui.grades.GradesFragment"
         android:label="@string/title_grades"
         tools:layout="@layout/fragment_grades" />
 
     <fragment
+        android:id="@+id/navigation_homework"
+        android:name="com.example.eljur.ui.homework.HomeworkFragment"
+        android:label="@string/title_assignments"
+        tools:layout="@layout/fragment_homework" />
+
+    <fragment
         android:id="@+id/navigation_profile"
         android:name="com.example.eljur.ui.profile.ProfileFragment"
         android:label="@string/title_profile"
         tools:layout="@layout/fragment_profile" />
-
 </navigation>

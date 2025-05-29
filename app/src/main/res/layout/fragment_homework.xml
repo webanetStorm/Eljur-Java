@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/homeworkFragmentRoot"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/grey_700"
+    android:orientation="vertical">
+
+    <RadioGroup
+        android:id="@+id/viewModeSelector"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        android:background="@drawable/bg_toggle"
+        android:gravity="center"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/rbUpcoming"
+            style="@style/ToggleButton"
+            android:checked="true"
+            android:text="БЛИЖАЙШИЕ" />
+
+        <RadioButton
+            android:id="@+id/rbPast"
+            style="@style/ToggleButton"
+            android:text="ПРОШЕДШИЕ" />
+    </RadioGroup>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvHomeworks"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_marginTop="10dp"
+        android:clipToPadding="false" />
+</LinearLayout>
