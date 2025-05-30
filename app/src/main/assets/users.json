@@ -1,0 +1,12 @@
+[
+    {
+        "login": "webanet",
+        "password": "1234",
+        "fullName": "Яскевич Матвей Дмитриевич",
+        "gender": "Мужской",
+        "age": 18,
+        "className": "11-Б",
+        "classTeacher": "Коляскина А. А.",
+        "avatar": "avatar.png"
+    }
+]

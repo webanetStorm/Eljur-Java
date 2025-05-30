@@ -35,6 +35,9 @@ android {
 }
 
 dependencies {
+    implementation(libs.appcompat.v161)
+    implementation(libs.gson)
+    implementation(libs.glide)
     implementation(libs.cardview)
     implementation(libs.flexbox)
     implementation(libs.appcompat)
@@ -44,7 +47,9 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.ktx)
     implementation(libs.navigation.fragment)
     implementation(libs.navigation.ui)
+    implementation(libs.firebase.crashlytics.buildtools)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    annotationProcessor(libs.glide.compiler)
 }
