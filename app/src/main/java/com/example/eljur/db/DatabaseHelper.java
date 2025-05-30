@@ -18,7 +18,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
 
     private static final String DATABASE_NAME = "eljur.db";
 
-    private static final int DATABASE_VERSION = 18;
+    private static final int DATABASE_VERSION = 19;
 
     private final Context context;
 
@@ -98,9 +98,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
         db.execSQL( "CREATE TABLE homework (" + "id INTEGER PRIMARY KEY AUTOINCREMENT," + "subject_id INTEGER NOT NULL," + "term_id INTEGER NOT NULL," + "due_date TEXT NOT NULL," + "description TEXT," + "FOREIGN KEY(subject_id) REFERENCES subject(id)," + "FOREIGN KEY(term_id) REFERENCES term(id))" );
 
         db.execSQL( "CREATE TABLE holiday (date TEXT PRIMARY KEY)" );
-
-        db.execSQL( "CREATE TABLE user (" + "id INTEGER PRIMARY KEY AUTOINCREMENT, " + "full_name TEXT NOT NULL, " + "gender TEXT NOT NULL, " + "age INTEGER NOT NULL, " + "class_name TEXT NOT NULL, " + "class_teacher TEXT NOT NULL, " + "avatar_url TEXT, " + "is_current INTEGER DEFAULT 0)" );
-    }
+}
 
     private void dropTables( SQLiteDatabase db )
     {
@@ -113,7 +111,6 @@ public class DatabaseHelper extends SQLiteOpenHelper
         db.execSQL( "DROP TABLE IF EXISTS teacher" );
         db.execSQL( "DROP TABLE IF EXISTS term" );
         db.execSQL( "DROP TABLE IF EXISTS academic_year" );
-        db.execSQL( "DROP TABLE IF EXISTS user" );
     }
 
 }
