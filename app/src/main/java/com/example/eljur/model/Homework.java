@@ -4,8 +4,12 @@ package com.example.eljur.model;
 public class Homework
 {
 
-    private final String subject, description;
+    private String subject, description;
 
+
+    public Homework()
+    {
+    }
 
     public Homework( String subject, String description )
     {

@@ -112,6 +112,17 @@ public class DayAdapter extends RecyclerView.Adapter<DayAdapter.DayViewHolder>
         notifyDataSetChanged();
     }
 
+    public void updateLessonCount( int index, int count )
+    {
+        if ( index >= 0 && index < days.size() )
+        {
+            Day day = days.get( index );
+            days.set( index, new Day( day.getDate(), count ) );
+            notifyItemChanged( index );
+        }
+    }
+
+
     public static class DayViewHolder extends RecyclerView.ViewHolder
     {
 

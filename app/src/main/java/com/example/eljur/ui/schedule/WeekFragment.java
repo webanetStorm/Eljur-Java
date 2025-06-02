@@ -25,15 +25,14 @@ public class WeekFragment extends Fragment
 
     private static final String ARG_WEEK_OFFSET = "week_offset";
 
+    private DayAdapter adapter;
 
     public static WeekFragment newInstance( int weekOffset )
     {
         WeekFragment fragment = new WeekFragment();
         Bundle args = new Bundle();
-
         args.putInt( ARG_WEEK_OFFSET, weekOffset );
         fragment.setArguments( args );
-
         return fragment;
     }
 
@@ -58,26 +57,32 @@ public class WeekFragment extends Fragment
         for ( int i = 0; i < 7; i++ )
         {
             LocalDate date = baseMonday.plusDays( i );
-            int count = 0;
-
-            if ( scheduleFragment != null && scheduleFragment.isDateAllowed( date ) )
-            {
-                count = scheduleFragment.getLessonCountForDate( date );
-            }
-
-            days.add( new Day( date, count ) );
+            days.add( new Day( date, 0 ) ); // Инициализируем 0, потом обновим
         }
 
-        DayAdapter adapter = new DayAdapter( days, selectedDate ->
+        adapter = new DayAdapter( days, selectedDate ->
         {
             if ( scheduleFragment != null )
             {
-                scheduleFragment.loadSchedule( 1, selectedDate );
+                scheduleFragment.loadSchedule( selectedDate );
             }
         } );
-
         adapter.setSelectedDate( LocalDate.now() );
         recyclerView.setAdapter( adapter );
+
+        // Теперь загружаем кол-во уроков для каждого дня
+        if ( scheduleFragment != null )
+        {
+            for ( int i = 0; i < 7; i++ )
+            {
+                final int index = i;
+                LocalDate date = baseMonday.plusDays( i );
+                scheduleFragment.getLessonCountIfAllowed( date, count ->
+                {
+                    adapter.updateLessonCount( index, count );
+                } );
+            }
+        }
 
         return recyclerView;
     }

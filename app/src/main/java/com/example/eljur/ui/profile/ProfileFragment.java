@@ -1,27 +1,21 @@
 package com.example.eljur.ui.profile;
 
 
-import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.LinearLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
-import com.example.eljur.R;
 import com.example.eljur.databinding.FragmentProfileBinding;
-import com.example.eljur.model.User;
-import com.example.eljur.ui.auth.AuthActivity;
-import com.example.eljur.util.UserManager;
-
-import java.util.List;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.*;
+import com.example.eljur.R;
 
 
 public class ProfileFragment extends Fragment
@@ -29,7 +23,7 @@ public class ProfileFragment extends Fragment
 
     private FragmentProfileBinding binding;
 
-    private User currentUser;
+    private DatabaseReference db;
 
 
     @Override
@@ -37,66 +31,76 @@ public class ProfileFragment extends Fragment
     {
         binding = FragmentProfileBinding.inflate( inflater, container, false );
 
-
-        UserManager.logout( requireContext() );
-
-        List<User> users = UserManager.loadUsers( requireContext() );
-        User freshUser = users.get( 0 );
-
-        UserManager.saveCurrentUser( requireContext(), freshUser );
-
-
-        currentUser = UserManager.getCurrentUser( requireContext() );
-
-        if ( currentUser == null )
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if ( user == null )
         {
-            startActivity( new Intent( requireContext(), AuthActivity.class ) );
-            requireActivity().finish();
-
             return binding.getRoot();
         }
 
-        setupProfile();
+        db = FirebaseDatabase.getInstance().getReference( "users" ).child( user.getUid() );
+
+        db.addListenerForSingleValueEvent( new ValueEventListener()
+        {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snapshot )
+            {
+                String fullName = snapshot.child( "fullName" ).getValue( String.class );
+                String gender = snapshot.child( "gender" ).getValue( String.class );
+                int age = snapshot.child( "age" ).getValue( Integer.class );
+                String classId = snapshot.child( "classId" ).getValue( String.class );
+                String teacher = snapshot.child( "teacher" ).getValue( String.class );
+                String avatar = snapshot.child( "avatar" ).getValue( String.class );
+
+                binding.tvFullName.setText( fullName );
+                binding.tvRole.setText( "Ученик" );
+
+                setRowValue( 0, "Пол", gender );
+                setRowValue( 1, "Возраст", String.valueOf( age ) );
+                setRowValue( 2, "Класс", classId );
+                setRowValue( 3, "Классный руководитель", teacher );
+                setRowValue( 4, "Средний балл", "-" );
+
+                if ( avatar != null && !avatar.isEmpty() )
+                {
+                    Glide.with( requireContext() ).load( avatar ).circleCrop().into( binding.ivAvatar );
+                }
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError error )
+            {
+            }
+        } );
 
         binding.btnLogout.setOnClickListener( v ->
         {
-            UserManager.logout( requireContext() );
-            Toast.makeText( getContext(), "Выход из аккаунта", Toast.LENGTH_SHORT ).show();
-            startActivity( new Intent( requireContext(), AuthActivity.class ) );
-            requireActivity().finish();
+            FirebaseAuth.getInstance().signOut();
+            requireActivity().recreate();
         } );
 
         return binding.getRoot();
     }
 
-    private void setupProfile()
-    {
-        binding.tvFullName.setText( currentUser.fullName );
-        binding.tvRole.setText( "Ученик" );
-
-        if ( currentUser.avatar != null && !currentUser.avatar.isEmpty() )
-        {
-            Log.i( "WEBANET", currentUser.avatar );
-            Glide.with( requireContext() ).load( "file:///android_asset/" + currentUser.avatar ).circleCrop().into( binding.ivAvatar );
-        }
-
-        setRowValue( 0, "Пол", currentUser.gender );
-        setRowValue( 1, "Возраст", String.valueOf( currentUser.age ) );
-        setRowValue( 2, "Класс", currentUser.className );
-        setRowValue( 3, "Классный руководитель", currentUser.classTeacher );
-        setRowValue( 4, "Средний балл", "4.78" );
-    }
-
     private void setRowValue( int index, String label, String value )
     {
-        LinearLayout rowsContainer = binding.getRoot().findViewById( R.id.llProfileRows );
-        View row = rowsContainer.getChildAt( index );
+        ViewGroup container = binding.llProfileRows;
 
-        TextView tvLabel = row.findViewById( R.id.tvLabel );
-        TextView tvValue = row.findViewById( R.id.tvValue );
+        if ( index < container.getChildCount() )
+        {
+            View row = container.getChildAt( index );
 
-        tvLabel.setText( label );
-        tvValue.setText( value );
+            TextView tvLabel = row.findViewById( R.id.tvLabel );
+            TextView tvValue = row.findViewById( R.id.tvValue );
+
+            if ( tvLabel != null )
+            {
+                tvLabel.setText( label );
+            }
+            if ( tvValue != null )
+            {
+                tvValue.setText( value );
+            }
+        }
     }
 
     @Override

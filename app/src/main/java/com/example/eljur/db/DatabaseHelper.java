@@ -2,11 +2,18 @@ package com.example.eljur.db;
 
 
 import android.content.Context;
+import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -98,7 +105,7 @@ public class DatabaseHelper extends SQLiteOpenHelper
         db.execSQL( "CREATE TABLE homework (" + "id INTEGER PRIMARY KEY AUTOINCREMENT," + "subject_id INTEGER NOT NULL," + "term_id INTEGER NOT NULL," + "due_date TEXT NOT NULL," + "description TEXT," + "FOREIGN KEY(subject_id) REFERENCES subject(id)," + "FOREIGN KEY(term_id) REFERENCES term(id))" );
 
         db.execSQL( "CREATE TABLE holiday (date TEXT PRIMARY KEY)" );
-}
+    }
 
     private void dropTables( SQLiteDatabase db )
     {

@@ -4,11 +4,18 @@ package com.example.eljur.model;
 public class Grade
 {
 
-    private final int value, weight;
+    public String subject;
+
+    public int value, weight;
 
 
-    public Grade( int value, int weight )
+    public Grade()
     {
+    }
+
+    public Grade( String subject, int value, int weight )
+    {
+        this.subject = subject;
         this.value = value;
         this.weight = weight;
     }

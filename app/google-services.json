@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "870845602597",
+    "project_id": "e-journal-5d542",
+    "storage_bucket": "e-journal-5d542.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:870845602597:android:369b77e07a1472ca5918cc",
+        "android_client_info": {
+          "package_name": "com.example.eljur"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB00UaZqH-Yfeyjq_MJ7S52qSH3yJbIwDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

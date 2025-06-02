@@ -1,15 +1,11 @@
 package com.example.eljur.ui.schedule;
 
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -19,18 +15,16 @@ import androidx.viewpager2.widget.ViewPager2;
 
 import com.example.eljur.adapter.ScheduleAdapter;
 import com.example.eljur.databinding.FragmentScheduleBinding;
-import com.example.eljur.db.DatabaseHelper;
 import com.example.eljur.model.Grade;
 import com.example.eljur.model.Schedule;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.*;
 
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.time.LocalTime;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
+import java.time.format.DateTimeFormatter;
 import java.time.format.TextStyle;
+import java.util.*;
 
 
 public class ScheduleFragment extends Fragment
@@ -44,177 +38,171 @@ public class ScheduleFragment extends Fragment
 
     private ViewPager2 weekPager;
 
-    private DatabaseHelper dbHelper;
+    private DatabaseReference dbRef;
+
+    private String currentUserId;
+
+    private String classId;
 
     private LocalDate selectedDate = LocalDate.now();
-
 
     @Override
     public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
     {
         binding = FragmentScheduleBinding.inflate( inflater, container, false );
 
-        dbHelper = new DatabaseHelper( requireContext() );
-
         recyclerView = binding.rvSchedule;
         emptyView = binding.tvEmpty;
         weekPager = binding.vpWeeks;
 
+        dbRef = FirebaseDatabase.getInstance().getReference();
+        currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+
         weekPager.setAdapter( new WeekPagerAdapter( this ) );
         weekPager.setCurrentItem( 1000, false );
 
-        loadSchedule( 1, selectedDate );
+        dbRef.child( "users" ).child( currentUserId ).child( "classId" ).get().addOnSuccessListener( snapshot ->
+        {
+            classId = snapshot.getValue( String.class );
+            if ( classId != null )
+            {
+                loadSchedule( selectedDate );
+            }
+        } );
 
         return binding.getRoot();
     }
 
     public void updateDateIndicator( LocalDate anyDateOfWeek )
     {
-        String month = anyDateOfWeek.getMonth().getDisplayName( TextStyle.FULL_STANDALONE, new Locale( "ru" ) );
-        int year = anyDateOfWeek.getYear();
-        String trimester = getTermNameForDate( anyDateOfWeek );
+        dbRef.child( "terms" ).get().addOnSuccessListener( termsSnapshot ->
+        {
+            String month = anyDateOfWeek.getMonth().getDisplayName( TextStyle.FULL_STANDALONE, new Locale( "ru" ) );
+            int year = anyDateOfWeek.getYear();
 
-        String result = capitalizeFirst( month ) + " " + year + " · " + trimester;
-        binding.tvDateIndicator.setText( result );
+            String trimester = "Неучебный период";
+            for ( DataSnapshot term : termsSnapshot.getChildren() )
+            {
+                if ( !term.hasChild( "start_date" ) || !term.hasChild( "end_date" ) )
+                {
+                    continue;
+                }
+
+                LocalDate start = LocalDate.parse( term.child( "start_date" ).getValue( String.class ) );
+                LocalDate end = LocalDate.parse( term.child( "end_date" ).getValue( String.class ) );
+
+                if ( ( anyDateOfWeek.isEqual( start ) || anyDateOfWeek.isAfter( start ) ) && ( anyDateOfWeek.isEqual( end ) || anyDateOfWeek.isBefore( end ) ) )
+                {
+                    trimester = term.child( "term_number" ).getValue( Integer.class ) + " триместр";
+                    break;
+                }
+            }
+
+            String result = capitalizeFirst( month ) + " " + year + " · " + trimester;
+            binding.tvDateIndicator.setText( result );
+        } );
     }
 
     private String capitalizeFirst( String input )
     {
-        if ( input == null || input.isEmpty() )
-        {
-            return input;
-        }
-
-        return input.substring( 0, 1 ).toUpperCase() + input.substring( 1 );
+        return input == null || input.isEmpty() ? input : input.substring( 0, 1 ).toUpperCase() + input.substring( 1 );
     }
 
-    private String getTermNameForDate( LocalDate date )
+    public boolean isDateAllowed( LocalDate date, DataSnapshot academicSnapshot, DataSnapshot holidaysSnapshot )
     {
-        String query = "SELECT term_number FROM term WHERE ? BETWEEN start_date AND end_date";
+        boolean allowed = false;
 
-        try ( Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { date.toString() } ) )
+        // Проверка на учебный год
+        for ( DataSnapshot year : academicSnapshot.getChildren() )
         {
-            if ( cursor.moveToFirst() )
+            LocalDate start = LocalDate.parse( year.child( "start_date" ).getValue( String.class ) );
+            LocalDate end = LocalDate.parse( year.child( "end_date" ).getValue( String.class ) );
+            if ( !date.isBefore( start ) && !date.isAfter( end ) )
             {
-                return cursor.getInt( 0 ) + " триместр";
+                allowed = true;
+                break;
             }
         }
 
-        return "Неучебный период";
+        // Проверка на праздники
+        if ( holidaysSnapshot.hasChild( date.toString() ) )
+        {
+            allowed = false;
+        }
+
+        return allowed;
     }
 
-    public boolean isDateAllowed( LocalDate date )
-    {
-        SQLiteDatabase db = dbHelper.getReadableDatabase();
-
-        String yearCheck = "SELECT 1 FROM academic_year WHERE ? BETWEEN start_date AND end_date";
-        try ( Cursor cursor = db.rawQuery( yearCheck, new String[] { date.toString() } ) )
-        {
-            if ( !cursor.moveToFirst() )
-            {
-                return false;
-            }
-        }
-
-        String holidayCheck = "SELECT 1 FROM holiday WHERE date = ?";
-        try ( Cursor cursor = db.rawQuery( holidayCheck, new String[] { date.toString() } ) )
-        {
-            if ( cursor.moveToFirst() )
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    public int getLessonCountForDate( LocalDate date )
-    {
-        if ( !isDateAllowed( date ) )
-        {
-            return 0;
-        }
-
-        int count = 0;
-        int dayOfWeek = date.getDayOfWeek().getValue();
-
-        String query = "SELECT COUNT(*) FROM schedule WHERE year_id = 1 AND day_of_week = ?";
-        try ( Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { String.valueOf( dayOfWeek ) } ) )
-        {
-            if ( cursor.moveToFirst() )
-            {
-                count = cursor.getInt( 0 );
-            }
-        }
-
-        return count;
-    }
-
-    public void loadSchedule( int yearId, LocalDate date )
+    public void loadSchedule( LocalDate date )
     {
         selectedDate = date;
 
-        if ( !isDateAllowed( date ) )
+        dbRef.child( "academic_year" ).get().addOnSuccessListener( academicSnapshot ->
         {
-            updateUI( new ArrayList<>() );
-            return;
-        }
-
-        List<Schedule> scheduleItems = new ArrayList<>();
-        int dayOfWeek = date.getDayOfWeek().getValue();
-
-        String query = "SELECT sch.lesson_number, sch.classroom, subj.name AS subject_name, " + "t.name AS teacher_name, l.start_time, l.end_time, sch.subject_id " + "FROM schedule sch " + "INNER JOIN subject subj ON sch.subject_id = subj.id " + "INNER JOIN teacher t ON sch.teacher_id = t.id " + "INNER JOIN lesson l ON sch.lesson_number = l.lesson_number " + "WHERE sch.year_id = ? AND sch.day_of_week = ? " + "ORDER BY sch.lesson_number ASC";
-
-        try ( Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { String.valueOf( yearId ),
-                String.valueOf( dayOfWeek ) } ) )
-        {
-            if ( cursor.moveToFirst() )
+            dbRef.child( "holidays" ).get().addOnSuccessListener( holidaysSnapshot ->
             {
-                do
+                boolean allowed = isDateAllowed( date, academicSnapshot, holidaysSnapshot );
+
+                if ( !allowed )
                 {
-                    int lessonNumber = cursor.getInt( cursor.getColumnIndexOrThrow( "lesson_number" ) );
-                    int subjectId = cursor.getInt( cursor.getColumnIndexOrThrow( "subject_id" ) );
-
-                    String homework = getHomeworkForLesson( subjectId, date );
-                    List<Grade> grades = getGradesForLesson( subjectId, date );
-
-                    scheduleItems.add( new Schedule( cursor.getString( cursor.getColumnIndexOrThrow( "subject_name" ) ), cursor.getString( cursor.getColumnIndexOrThrow( "teacher_name" ) ), cursor.getString( cursor.getColumnIndexOrThrow( "classroom" ) ), cursor.getString( cursor.getColumnIndexOrThrow( "start_time" ) ), cursor.getString( cursor.getColumnIndexOrThrow( "end_time" ) ), homework, grades, lessonNumber ) );
+                    updateUI( new ArrayList<>() );
+                    return;
                 }
-                while ( cursor.moveToNext() );
-            }
-        }
 
-        updateUI( scheduleItems );
-    }
+                dbRef.child( "schedule" ).child( classId ).child( String.valueOf( date.getDayOfWeek().getValue() ) ).get().addOnSuccessListener( scheduleSnapshot ->
+                {
+                    dbRef.child( "lessons" ).get().addOnSuccessListener( lessonsSnapshot ->
+                    {
+                        dbRef.child( "homeworks" ).child( classId ).child( date.toString() ).get().addOnSuccessListener( homeworksSnapshot ->
+                        {
+                            dbRef.child( "grades" ).child( currentUserId ).child( date.toString() ).get().addOnSuccessListener( gradesSnapshot ->
+                            {
 
-    private String getHomeworkForLesson( int subjectId, LocalDate date )
-    {
-        String query = "SELECT description FROM homework WHERE subject_id = ? AND due_date = ?";
-        try ( Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { String.valueOf( subjectId ),
-                date.toString() } ) )
-        {
-            if ( cursor.moveToFirst() )
-            {
-                return cursor.getString( 0 );
-            }
-        }
-        return null;
-    }
+                                List<Schedule> scheduleItems = new ArrayList<>();
 
-    private List<Grade> getGradesForLesson( int subjectId, LocalDate date )
-    {
-        List<Grade> grades = new ArrayList<>();
-        String query = "SELECT value, weight FROM grade WHERE subject_id = ? AND date = ?";
+                                for ( DataSnapshot item : scheduleSnapshot.getChildren() )
+                                {
+                                    int lessonNumber = item.child( "lessonNumber" ).getValue( Integer.class );
+                                    String subject = item.child( "subject" ).getValue( String.class );
+                                    String teacher = item.child( "teacher" ).getValue( String.class );
+                                    String classroom = item.child( "classroom" ).getValue( String.class );
 
-        try ( Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { String.valueOf( subjectId ),
-                date.toString() } ) )
-        {
-            while ( cursor.moveToNext() )
-            {
-                grades.add( new Grade( cursor.getInt( 0 ), cursor.getInt( 1 ) ) );
-            }
-        }
-        return grades;
+                                    String startTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "start_time" ).getValue( String.class );
+                                    String endTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "end_time" ).getValue( String.class );
+
+                                    // Найти домашку
+                                    String homework = null;
+                                    for ( DataSnapshot hw : homeworksSnapshot.getChildren() )
+                                    {
+                                        if ( subject.equals( hw.child( "subject" ).getValue( String.class ) ) )
+                                        {
+                                            homework = hw.child( "description" ).getValue( String.class );
+                                            break;
+                                        }
+                                    }
+
+                                    // Найти оценки
+                                    List<Grade> grades = new ArrayList<>();
+                                    for ( DataSnapshot g : gradesSnapshot.getChildren() )
+                                    {
+                                        if ( subject.equals( g.child( "subject" ).getValue( String.class ) ) )
+                                        {
+                                            grades.add( new Grade( "-", g.child( "value" ).getValue( Integer.class ), g.child( "weight" ).getValue( Integer.class ) ) );
+                                        }
+                                    }
+
+                                    scheduleItems.add( new Schedule( subject, teacher, classroom, startTime, endTime, homework, grades, lessonNumber ) );
+                                }
+
+                                // Сортировка
+                                scheduleItems.sort( Comparator.comparingInt( Schedule::getLessonNumber ) );
+                                updateUI( scheduleItems );
+                            } );
+                        } );
+                    } );
+                } );
+            } );
+        } );
     }
 
     private int getBreakDuration( String endTime, String nextStartTime )
@@ -222,7 +210,7 @@ public class ScheduleFragment extends Fragment
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern( "HH:mm" );
         LocalTime end = LocalTime.parse( endTime, formatter );
         LocalTime nextStart = LocalTime.parse( nextStartTime, formatter );
-        return (int)Duration.between( end, nextStart ).toMinutes();
+        return (int)java.time.Duration.between( end, nextStart ).toMinutes();
     }
 
     private void updateUI( List<Schedule> lessons )
@@ -259,11 +247,40 @@ public class ScheduleFragment extends Fragment
         }
     }
 
+    public void getLessonCountIfAllowed( LocalDate date, OnCountReady callback )
+    {
+        dbRef.child( "academic_year" ).get().addOnSuccessListener( academicSnapshot ->
+        {
+            dbRef.child( "holidays" ).get().addOnSuccessListener( holidaysSnapshot ->
+            {
+                if ( !isDateAllowed( date, academicSnapshot, holidaysSnapshot ) )
+                {
+                    callback.onCountReady( 0 );
+                    return;
+                }
+
+                dbRef.child( "schedule" ).child( classId ).child( String.valueOf( date.getDayOfWeek().getValue() ) ).get().addOnSuccessListener( scheduleSnap ->
+                {
+                    int count = (int)scheduleSnap.getChildrenCount();
+                    callback.onCountReady( count );
+                } );
+            } );
+        } );
+    }
+
     @Override
     public void onDestroyView()
     {
         super.onDestroyView();
         binding = null;
+    }
+
+
+    public interface OnCountReady
+    {
+
+        void onCountReady( int count );
+
     }
 
 }

@@ -1,7 +1,6 @@
 package com.example.eljur.ui.homework;
 
 
-import android.database.Cursor;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,24 +13,18 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import com.example.eljur.R;
 import com.example.eljur.adapter.HomeworkAdapter;
 import com.example.eljur.databinding.FragmentHomeworkBinding;
-import com.example.eljur.db.DatabaseHelper;
 import com.example.eljur.model.Homework;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.*;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 
 public class HomeworkFragment extends Fragment
 {
 
     private FragmentHomeworkBinding binding;
-
-    private DatabaseHelper dbHelper;
 
     private boolean showUpcoming = true;
 
@@ -40,7 +33,6 @@ public class HomeworkFragment extends Fragment
     public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
     {
         binding = FragmentHomeworkBinding.inflate( inflater, container, false );
-        dbHelper = new DatabaseHelper( requireContext() );
 
         setupTabSelector();
         loadData();
@@ -59,29 +51,84 @@ public class HomeworkFragment extends Fragment
 
     private void loadData()
     {
-        Map<String, List<Homework>> map = new LinkedHashMap<>();
+        String uid = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        DatabaseReference userRef = FirebaseDatabase.getInstance().getReference( "users" ).child( uid );
 
-        String today = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() ).format( new Date() );
-        String filter = showUpcoming ? ">= ?" : "< ?";
-
-        String query = "SELECT due_date, s.name, h.description FROM homework h " + "INNER JOIN subject s ON h.subject_id = s.id " + "WHERE due_date " + filter + " ORDER BY due_date";
-
-        Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, new String[] { today } );
-        while ( cursor.moveToNext() )
+        userRef.child( "classId" ).addListenerForSingleValueEvent( new ValueEventListener()
         {
-            String date = cursor.getString( 0 );
-            String subject = cursor.getString( 1 );
-            String desc = cursor.getString( 2 );
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snapshot )
+            {
+                String classId = snapshot.getValue( String.class );
+                if ( classId != null && !classId.isEmpty() )
+                {
+                    loadHomeworkByClass( classId );
+                }
+            }
 
-            map.computeIfAbsent( date, k -> new ArrayList<>() ).add( new Homework( subject, desc ) );
-        }
-        cursor.close();
+            @Override
+            public void onCancelled( @NonNull DatabaseError error )
+            {
+            }
+        } );
+    }
 
-        List<String> sortedDates = new ArrayList<>( map.keySet() );
+    private void loadHomeworkByClass( String classId )
+    {
+        DatabaseReference hwRef = FirebaseDatabase.getInstance().getReference( "homeworks" ).child( classId );
+        String today = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() ).format( new Date() );
 
-        HomeworkAdapter adapter = new HomeworkAdapter( sortedDates, map );
-        binding.rvHomeworks.setLayoutManager( new LinearLayoutManager( requireContext() ) );
-        binding.rvHomeworks.setAdapter( adapter );
+        hwRef.addListenerForSingleValueEvent( new ValueEventListener()
+        {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snapshot )
+            {
+                Map<String, List<Homework>> map = new LinkedHashMap<>();
+
+                for ( DataSnapshot dateSnap : snapshot.getChildren() )
+                {
+                    String date = dateSnap.getKey();
+
+                    if ( date == null )
+                    {
+                        continue;
+                    }
+
+                    boolean isAfter = date.compareTo( today ) >= 0;
+                    if ( ( showUpcoming && !isAfter ) || ( !showUpcoming && isAfter ) )
+                    {
+                        continue;
+                    }
+
+                    List<Homework> hwList = new ArrayList<>();
+                    for ( DataSnapshot hwSnap : dateSnap.getChildren() )
+                    {
+                        Homework hw = hwSnap.getValue( Homework.class );
+                        if ( hw != null )
+                        {
+                            hwList.add( hw );
+                        }
+                    }
+
+                    if ( !hwList.isEmpty() )
+                    {
+                        map.put( date, hwList );
+                    }
+                }
+
+                List<String> sortedDates = new ArrayList<>( map.keySet() );
+                Collections.sort( sortedDates );
+
+                HomeworkAdapter adapter = new HomeworkAdapter( sortedDates, map );
+                binding.rvHomeworks.setLayoutManager( new LinearLayoutManager( requireContext() ) );
+                binding.rvHomeworks.setAdapter( adapter );
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError error )
+            {
+            }
+        } );
     }
 
     @Override

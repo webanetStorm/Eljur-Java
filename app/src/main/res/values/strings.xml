@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Eljur</string>
+    <string name="app_name">E-Journal</string>
     <string name="title_schedule">Расписание</string>
     <string name="title_grades">Оценки</string>
     <string name="title_assignments">Задания</string>

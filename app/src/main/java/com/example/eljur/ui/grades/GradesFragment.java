@@ -1,7 +1,6 @@
 package com.example.eljur.ui.grades;
 
 
-import android.database.Cursor;
 import android.os.Bundle;
 import android.util.Pair;
 import android.view.LayoutInflater;
@@ -9,28 +8,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eljur.R;
 import com.example.eljur.adapter.GradesByDateAdapter;
 import com.example.eljur.adapter.GradesBySubjectAdapter;
 import com.example.eljur.databinding.FragmentGradesBinding;
-import com.example.eljur.db.DatabaseHelper;
 import com.example.eljur.model.Grade;
+import com.example.eljur.model.Term;
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.database.*;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 
 public class GradesFragment extends Fragment
@@ -38,89 +32,30 @@ public class GradesFragment extends Fragment
 
     private FragmentGradesBinding binding;
 
-    private DatabaseHelper dbHelper;
-
-    private final List<Integer> termIds = new ArrayList<>();
+    private final List<Pair<Integer, Term>> termList = new ArrayList<>();
 
     private int selectedTermIndex = -1;
 
     private boolean isByDateView = true;
+
+    private final List<String> dates = new ArrayList<>();
+
+    private final Map<String, List<Pair<String, Grade>>> gradesByDate = new HashMap<>();
+
+    private final Map<String, List<Grade>> gradesBySubject = new HashMap<>();
+
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() );
 
 
     @Override
     public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
     {
         binding = FragmentGradesBinding.inflate( inflater, container, false );
-        dbHelper = new DatabaseHelper( requireContext() );
 
-        setupPeriodSelector();
         setupViewModeSelector();
-        updateGradesView();
+        setupPeriodSelector();
 
         return binding.getRoot();
-    }
-
-    private void setupPeriodSelector()
-    {
-        RadioGroup group = binding.periodSelector;
-        group.removeAllViews();
-        termIds.clear();
-
-        LayoutInflater inflater = LayoutInflater.from( requireContext() );
-        String currentDate = new SimpleDateFormat( "yyyy-MM-dd", Locale.getDefault() ).format( new Date() );
-
-        Cursor cursor = dbHelper.getReadableDatabase().rawQuery( "SELECT id, term_number, start_date, end_date FROM term ORDER BY term_number", null );
-        int currentTermIndex = -1;
-        int index = 0;
-
-        while ( cursor.moveToNext() )
-        {
-            int termId = cursor.getInt( 0 );
-            int termNumber = cursor.getInt( 1 );
-            String startDate = cursor.getString( 2 );
-            String endDate = cursor.getString( 3 );
-
-            RadioButton rb = (RadioButton)inflater.inflate( R.layout.radio_button_item, group, false );
-            rb.setText( termNumber + " триместр" );
-            rb.setId( View.generateViewId() );
-            rb.setOnClickListener( v ->
-            {
-                selectedTermIndex = termIds.indexOf( termId );
-                updateGradesView();
-            } );
-
-            termIds.add( termId );
-            group.addView( rb );
-
-            if ( currentDate.compareTo( startDate ) >= 0 && currentDate.compareTo( endDate ) <= 0 )
-            {
-                currentTermIndex = index;
-            }
-
-            index++;
-        }
-        cursor.close();
-
-        RadioButton rbAll = (RadioButton)inflater.inflate( R.layout.radio_button_item, group, false );
-        rbAll.setText( "Год" );
-        rbAll.setId( View.generateViewId() );
-        rbAll.setOnClickListener( v ->
-        {
-            selectedTermIndex = -1;
-            updateGradesView();
-        } );
-        group.addView( rbAll );
-
-        if ( currentTermIndex != -1 )
-        {
-            ( (RadioButton)group.getChildAt( currentTermIndex ) ).setChecked( true );
-            selectedTermIndex = currentTermIndex;
-        }
-        else
-        {
-            rbAll.setChecked( true );
-            selectedTermIndex = -1;
-        }
     }
 
     private void setupViewModeSelector()
@@ -132,87 +67,166 @@ public class GradesFragment extends Fragment
         } );
     }
 
+    private void setupPeriodSelector()
+    {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference( "terms" );
+
+        ref.addListenerForSingleValueEvent( new ValueEventListener()
+        {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snapshot )
+            {
+                RadioGroup group = binding.periodSelector;
+                group.removeAllViews();
+                termList.clear();
+
+                LayoutInflater inflater = LayoutInflater.from( requireContext() );
+                String today = dateFormat.format( new Date() );
+
+                int currentTermIndex = -1;
+                int index = 0;
+
+                for ( DataSnapshot child : snapshot.getChildren() )
+                {
+                    if ( !child.exists() || child.getValue() == null )
+                    {
+                        continue;
+                    }
+
+                    Term term = child.getValue( Term.class );
+                    termList.add( new Pair<>( index, term ) );
+
+                    RadioButton rb = (RadioButton)inflater.inflate( R.layout.radio_button_item, group, false );
+                    rb.setText( term.term_number + " триместр" );
+                    rb.setId( View.generateViewId() );
+
+                    int finalIndex = index;
+                    rb.setOnClickListener( v ->
+                    {
+                        selectedTermIndex = finalIndex;
+                        loadGrades();
+                    } );
+
+                    if ( today.compareTo( term.start_date ) >= 0 && today.compareTo( term.end_date ) <= 0 )
+                    {
+                        currentTermIndex = index;
+                    }
+
+                    group.addView( rb );
+                    index++;
+                }
+
+                RadioButton rbAll = (RadioButton)inflater.inflate( R.layout.radio_button_item, group, false );
+                rbAll.setText( "Год" );
+                rbAll.setId( View.generateViewId() );
+                rbAll.setOnClickListener( v ->
+                {
+                    selectedTermIndex = -1;
+                    loadGrades();
+                } );
+                group.addView( rbAll );
+
+                if ( currentTermIndex != -1 )
+                {
+                    ( (RadioButton)group.getChildAt( currentTermIndex ) ).setChecked( true );
+                    selectedTermIndex = currentTermIndex;
+                }
+                else
+                {
+                    rbAll.setChecked( true );
+                    selectedTermIndex = -1;
+                }
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError error )
+            {
+            }
+        } );
+    }
+
+    private void loadGrades()
+    {
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if ( user == null )
+        {
+            return;
+        }
+
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference( "grades" ).child( user.getUid() );
+
+        ref.addListenerForSingleValueEvent( new ValueEventListener()
+        {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snapshot )
+            {
+                dates.clear();
+                gradesByDate.clear();
+                gradesBySubject.clear();
+
+                for ( DataSnapshot dateSnap : snapshot.getChildren() )
+                {
+                    String date = dateSnap.getKey();
+                    if ( !isInSelectedTerm( date ) )
+                    {
+                        continue;
+                    }
+
+                    for ( DataSnapshot gradeSnap : dateSnap.getChildren() )
+                    {
+                        Grade grade = gradeSnap.getValue( Grade.class );
+                        if ( grade == null || grade.subject == null )
+                        {
+                            continue;
+                        }
+
+                        gradesByDate.computeIfAbsent( date, k -> new ArrayList<>() ).add( new Pair<>( grade.subject, grade ) );
+                        gradesBySubject.computeIfAbsent( grade.subject, k -> new ArrayList<>() ).add( grade );
+                    }
+
+                    if ( !dates.contains( date ) )
+                    {
+                        dates.add( date );
+                    }
+                }
+
+                Collections.sort( dates, Collections.reverseOrder() );
+                updateGradesView();
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError error )
+            {
+            }
+        } );
+    }
+
+    private boolean isInSelectedTerm( String date )
+    {
+        if ( selectedTermIndex == -1 || selectedTermIndex >= termList.size() )
+        {
+            return true;
+        }
+
+        Term term = termList.get( selectedTermIndex ).second;
+        return date.compareTo( term.start_date ) >= 0 && date.compareTo( term.end_date ) <= 0;
+    }
+
     private void updateGradesView()
     {
         if ( isByDateView )
         {
-            showGradesByDate();
+            GradesByDateAdapter adapter = new GradesByDateAdapter( dates, gradesByDate );
+            binding.rvGrades.setLayoutManager( new LinearLayoutManager( requireContext() ) );
+            binding.rvGrades.setAdapter( adapter );
         }
         else
         {
-            showSubjectsList();
+            List<String> subjects = new ArrayList<>( gradesBySubject.keySet() );
+            GradesBySubjectAdapter adapter = new GradesBySubjectAdapter( subjects, gradesBySubject );
+            binding.rvGrades.setLayoutManager( new LinearLayoutManager( requireContext() ) );
+            binding.rvGrades.setAdapter( adapter );
         }
-    }
-
-    private void showGradesByDate()
-    {
-        List<String> dates = new ArrayList<>();
-        Map<String, List<Pair<String, Grade>>> gradesMap = new HashMap<>();
-
-        String termFilter = "";
-        if ( selectedTermIndex >= 0 && selectedTermIndex < termIds.size() )
-        {
-            int termId = termIds.get( selectedTermIndex );
-            termFilter = "AND g.term_id = " + termId;
-        }
-
-        String query = "SELECT g.date, s.name, g.value, g.weight " + "FROM grade g " + "INNER JOIN subject s ON g.subject_id = s.id " + "WHERE 1=1 " + termFilter + " ORDER BY g.date DESC";
-
-        Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, null );
-        while ( cursor.moveToNext() )
-        {
-            String date = cursor.getString( 0 );
-            String subject = cursor.getString( 1 );
-            int value = cursor.getInt( 2 );
-            int weight = cursor.getInt( 3 );
-
-            if ( !gradesMap.containsKey( date ) )
-            {
-                gradesMap.put( date, new ArrayList<>() );
-                dates.add( date );
-            }
-
-            gradesMap.get( date ).add( new Pair<>( subject, new Grade( value, weight ) ) );
-        }
-        cursor.close();
-
-        GradesByDateAdapter adapter = new GradesByDateAdapter( dates, gradesMap );
-        binding.rvGrades.setLayoutManager( new LinearLayoutManager( requireContext() ) );
-        binding.rvGrades.setAdapter( adapter );
-    }
-
-    private void showSubjectsList()
-    {
-        List<String> subjectNames = new ArrayList<>();
-        Map<String, List<Grade>> gradesMap = new HashMap<>();
-
-        String termFilter = "";
-        if ( selectedTermIndex >= 0 && selectedTermIndex < termIds.size() )
-        {
-            int termId = termIds.get( selectedTermIndex );
-            termFilter = "AND g.term_id = " + termId;
-        }
-
-        String query = "SELECT s.name, g.value, g.weight " + "FROM grade g " + "INNER JOIN subject s ON g.subject_id = s.id " + "WHERE 1 = 1 " + termFilter + " ORDER BY s.name";
-
-        Cursor cursor = dbHelper.getReadableDatabase().rawQuery( query, null );
-        while ( cursor.moveToNext() )
-        {
-            String subject = cursor.getString( 0 );
-            int value = cursor.getInt( 1 );
-            int weight = cursor.getInt( 2 );
-
-            if ( !gradesMap.containsKey( subject ) )
-            {
-                gradesMap.put( subject, new ArrayList<>() );
-                subjectNames.add( subject );
-            }
-            gradesMap.get( subject ).add( new Grade( value, weight ) );
-        }
-        cursor.close();
-
-        binding.rvGrades.setLayoutManager( new LinearLayoutManager( requireContext() ) );
-        binding.rvGrades.setAdapter( new GradesBySubjectAdapter( subjectNames, gradesMap ) );
     }
 
     @Override
