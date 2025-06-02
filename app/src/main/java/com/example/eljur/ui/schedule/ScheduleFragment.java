@@ -17,6 +17,8 @@ import com.example.eljur.adapter.ScheduleAdapter;
 import com.example.eljur.databinding.FragmentScheduleBinding;
 import com.example.eljur.model.Grade;
 import com.example.eljur.model.Schedule;
+import com.google.android.gms.tasks.Task;
+import com.google.android.gms.tasks.Tasks;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.*;
 
@@ -45,6 +47,7 @@ public class ScheduleFragment extends Fragment
     private String classId;
 
     private LocalDate selectedDate = LocalDate.now();
+
 
     @Override
     public View onCreateView( @NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
@@ -112,7 +115,6 @@ public class ScheduleFragment extends Fragment
     {
         boolean allowed = false;
 
-        // Проверка на учебный год
         for ( DataSnapshot year : academicSnapshot.getChildren() )
         {
             LocalDate start = LocalDate.parse( year.child( "start_date" ).getValue( String.class ) );
@@ -124,7 +126,6 @@ public class ScheduleFragment extends Fragment
             }
         }
 
-        // Проверка на праздники
         if ( holidaysSnapshot.hasChild( date.toString() ) )
         {
             allowed = false;
@@ -137,71 +138,65 @@ public class ScheduleFragment extends Fragment
     {
         selectedDate = date;
 
-        dbRef.child( "academic_year" ).get().addOnSuccessListener( academicSnapshot ->
-        {
-            dbRef.child( "holidays" ).get().addOnSuccessListener( holidaysSnapshot ->
-            {
-                boolean allowed = isDateAllowed( date, academicSnapshot, holidaysSnapshot );
+        Task<DataSnapshot> academicTask = dbRef.child( "academic_year" ).get();
+        Task<DataSnapshot> holidayTask = dbRef.child( "holidays" ).get();
+        Task<DataSnapshot> scheduleTask = dbRef.child( "schedule" ).child( classId ).child( String.valueOf( date.getDayOfWeek().getValue() ) ).get();
+        Task<DataSnapshot> lessonsTask = dbRef.child( "lessons" ).get();
+        Task<DataSnapshot> homeworksTask = dbRef.child( "homeworks" ).child( classId ).child( date.toString() ).get();
+        Task<DataSnapshot> gradesTask = dbRef.child( "grades" ).child( currentUserId ).child( date.toString() ).get();
 
-                if ( !allowed )
+        Tasks.whenAllSuccess( academicTask, holidayTask, scheduleTask, lessonsTask, homeworksTask, gradesTask ).addOnSuccessListener( results ->
+        {
+
+            DataSnapshot academicSnapshot = (DataSnapshot)results.get( 0 );
+            DataSnapshot holidaysSnapshot = (DataSnapshot)results.get( 1 );
+            DataSnapshot scheduleSnapshot = (DataSnapshot)results.get( 2 );
+            DataSnapshot lessonsSnapshot = (DataSnapshot)results.get( 3 );
+            DataSnapshot homeworksSnapshot = (DataSnapshot)results.get( 4 );
+            DataSnapshot gradesSnapshot = (DataSnapshot)results.get( 5 );
+
+            if ( !isDateAllowed( date, academicSnapshot, holidaysSnapshot ) )
+            {
+                updateUI( new ArrayList<>() );
+                return;
+            }
+
+            List<Schedule> scheduleItems = new ArrayList<>();
+
+            for ( DataSnapshot item : scheduleSnapshot.getChildren() )
+            {
+                int lessonNumber = item.child( "lessonNumber" ).getValue( Integer.class );
+                String subject = item.child( "subject" ).getValue( String.class );
+                String teacher = item.child( "teacher" ).getValue( String.class );
+                String classroom = item.child( "classroom" ).getValue( String.class );
+
+                String startTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "start_time" ).getValue( String.class );
+                String endTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "end_time" ).getValue( String.class );
+
+                String homework = null;
+                for ( DataSnapshot hw : homeworksSnapshot.getChildren() )
                 {
-                    updateUI( new ArrayList<>() );
-                    return;
+                    if ( subject.equals( hw.child( "subject" ).getValue( String.class ) ) )
+                    {
+                        homework = hw.child( "description" ).getValue( String.class );
+                        break;
+                    }
                 }
 
-                dbRef.child( "schedule" ).child( classId ).child( String.valueOf( date.getDayOfWeek().getValue() ) ).get().addOnSuccessListener( scheduleSnapshot ->
+                List<Grade> grades = new ArrayList<>();
+                for ( DataSnapshot g : gradesSnapshot.getChildren() )
                 {
-                    dbRef.child( "lessons" ).get().addOnSuccessListener( lessonsSnapshot ->
+                    if ( subject.equals( g.child( "subject" ).getValue( String.class ) ) )
                     {
-                        dbRef.child( "homeworks" ).child( classId ).child( date.toString() ).get().addOnSuccessListener( homeworksSnapshot ->
-                        {
-                            dbRef.child( "grades" ).child( currentUserId ).child( date.toString() ).get().addOnSuccessListener( gradesSnapshot ->
-                            {
+                        grades.add( new Grade( "-", g.child( "value" ).getValue( Integer.class ), g.child( "weight" ).getValue( Integer.class ) ) );
+                    }
+                }
 
-                                List<Schedule> scheduleItems = new ArrayList<>();
+                scheduleItems.add( new Schedule( subject, teacher, classroom, startTime, endTime, homework, grades, lessonNumber ) );
+            }
 
-                                for ( DataSnapshot item : scheduleSnapshot.getChildren() )
-                                {
-                                    int lessonNumber = item.child( "lessonNumber" ).getValue( Integer.class );
-                                    String subject = item.child( "subject" ).getValue( String.class );
-                                    String teacher = item.child( "teacher" ).getValue( String.class );
-                                    String classroom = item.child( "classroom" ).getValue( String.class );
-
-                                    String startTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "start_time" ).getValue( String.class );
-                                    String endTime = lessonsSnapshot.child( String.valueOf( lessonNumber ) ).child( "end_time" ).getValue( String.class );
-
-                                    // Найти домашку
-                                    String homework = null;
-                                    for ( DataSnapshot hw : homeworksSnapshot.getChildren() )
-                                    {
-                                        if ( subject.equals( hw.child( "subject" ).getValue( String.class ) ) )
-                                        {
-                                            homework = hw.child( "description" ).getValue( String.class );
-                                            break;
-                                        }
-                                    }
-
-                                    // Найти оценки
-                                    List<Grade> grades = new ArrayList<>();
-                                    for ( DataSnapshot g : gradesSnapshot.getChildren() )
-                                    {
-                                        if ( subject.equals( g.child( "subject" ).getValue( String.class ) ) )
-                                        {
-                                            grades.add( new Grade( "-", g.child( "value" ).getValue( Integer.class ), g.child( "weight" ).getValue( Integer.class ) ) );
-                                        }
-                                    }
-
-                                    scheduleItems.add( new Schedule( subject, teacher, classroom, startTime, endTime, homework, grades, lessonNumber ) );
-                                }
-
-                                // Сортировка
-                                scheduleItems.sort( Comparator.comparingInt( Schedule::getLessonNumber ) );
-                                updateUI( scheduleItems );
-                            } );
-                        } );
-                    } );
-                } );
-            } );
+            scheduleItems.sort( Comparator.comparingInt( Schedule::getLessonNumber ) );
+            updateUI( scheduleItems );
         } );
     }
 

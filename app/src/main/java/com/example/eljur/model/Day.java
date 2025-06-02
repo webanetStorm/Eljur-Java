@@ -1,4 +1,4 @@
-package com.example.eljur.model.schedule;
+package com.example.eljur.model;
 
 
 import java.time.LocalDate;

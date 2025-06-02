@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eljur.adapter.DayAdapter;
-import com.example.eljur.model.schedule.Day;
+import com.example.eljur.model.Day;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
@@ -26,6 +26,7 @@ public class WeekFragment extends Fragment
     private static final String ARG_WEEK_OFFSET = "week_offset";
 
     private DayAdapter adapter;
+
 
     public static WeekFragment newInstance( int weekOffset )
     {
@@ -56,8 +57,7 @@ public class WeekFragment extends Fragment
         List<Day> days = new ArrayList<>();
         for ( int i = 0; i < 7; i++ )
         {
-            LocalDate date = baseMonday.plusDays( i );
-            days.add( new Day( date, 0 ) ); // Инициализируем 0, потом обновим
+            days.add( new Day( baseMonday.plusDays( i ), 0 ) );
         }
 
         adapter = new DayAdapter( days, selectedDate ->
@@ -70,7 +70,6 @@ public class WeekFragment extends Fragment
         adapter.setSelectedDate( LocalDate.now() );
         recyclerView.setAdapter( adapter );
 
-        // Теперь загружаем кол-во уроков для каждого дня
         if ( scheduleFragment != null )
         {
             for ( int i = 0; i < 7; i++ )

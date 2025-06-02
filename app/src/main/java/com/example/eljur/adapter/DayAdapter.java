@@ -11,7 +11,7 @@ import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.eljur.R;
-import com.example.eljur.model.schedule.Day;
+import com.example.eljur.model.Day;
 
 import java.time.LocalDate;
 import java.time.format.TextStyle;
