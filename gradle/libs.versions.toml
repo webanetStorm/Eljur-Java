@@ -20,6 +20,10 @@ lifecycleViewmodelKtx = "2.9.0"
 navigationFragment = "2.9.0"
 navigationUi = "2.9.0"
 firebaseCrashlyticsBuildtools = "3.0.3"
+roomCommonJvm = "2.7.1"
+roomCompiler = "2.7.1"
+roomRuntime = "2.7.1"
+roomRuntimeAndroid = "2.7.1"
 
 [libraries]
 appcompat-v161 = { module = "androidx.appcompat:appcompat", version.ref = "appcompatVersion" }
@@ -44,6 +48,10 @@ lifecycle-viewmodel-ktx = { group = "androidx.lifecycle", name = "lifecycle-view
 navigation-fragment = { group = "androidx.navigation", name = "navigation-fragment", version.ref = "navigationFragment" }
 navigation-ui = { group = "androidx.navigation", name = "navigation-ui", version.ref = "navigationUi" }
 firebase-crashlytics-buildtools = { group = "com.google.firebase", name = "firebase-crashlytics-buildtools", version.ref = "firebaseCrashlyticsBuildtools" }
+room-common-jvm = { group = "androidx.room", name = "room-common-jvm", version.ref = "roomCommonJvm" }
+room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomCompiler" }
+room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomRuntime" }
+room-runtime-android = { group = "androidx.room", name = "room-runtime-android", version.ref = "roomRuntimeAndroid" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

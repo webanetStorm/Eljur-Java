@@ -78,5 +78,33 @@
             android:text="Выйти из аккаунта"
             android:textAllCaps="false"
             android:textColor="@color/white" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Заметки"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvNotes"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/grey_700" />
+
+        <Button
+            android:id="@+id/btnAddNote"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="@color/blue"
+            android:fontFamily="sans-serif-medium"
+            android:text="Добавить заметку"
+            android:textAllCaps="false"
+            android:textColor="@color/white" />
+
     </LinearLayout>
 </ScrollView>
