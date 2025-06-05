@@ -10,12 +10,13 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
-import com.bumptech.glide.Glide;
 import com.example.eljur.databinding.FragmentProfileBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.database.*;
 import com.example.eljur.R;
+
+import java.util.Locale;
 
 
 public class ProfileFragment extends Fragment
@@ -58,12 +59,7 @@ public class ProfileFragment extends Fragment
                 setRowValue( 1, "Возраст", String.valueOf( age ) );
                 setRowValue( 2, "Класс", classId );
                 setRowValue( 3, "Классный руководитель", teacher );
-                setRowValue( 4, "Средний балл", "-" );
-
-                if ( avatar != null && !avatar.isEmpty() )
-                {
-                    Glide.with( requireContext() ).load( avatar ).circleCrop().into( binding.ivAvatar );
-                }
+                loadAverageMark( user.getUid() );
             }
 
             @Override
@@ -101,6 +97,43 @@ public class ProfileFragment extends Fragment
                 tvValue.setText( value );
             }
         }
+    }
+
+    private void loadAverageMark( String uid )
+    {
+        DatabaseReference ref = FirebaseDatabase.getInstance().getReference( "grades" ).child( uid );
+
+        ref.addListenerForSingleValueEvent( new ValueEventListener()
+        {
+            @Override
+            public void onDataChange( @NonNull DataSnapshot snap )
+            {
+                int sum = 0, weightSum = 0;
+
+                for ( DataSnapshot date : snap.getChildren() )
+                {
+                    for ( DataSnapshot g : date.getChildren() )
+                    {
+                        Integer v = g.child( "value" ).getValue( Integer.class );
+                        Integer w = g.child( "weight" ).getValue( Integer.class );
+                        if ( v != null && w != null )
+                        {
+                            sum += v * w;
+                            weightSum += w;
+                        }
+                    }
+                }
+
+                String avg = ( weightSum == 0 ) ? "-" : String.format( Locale.getDefault(), "%.2f", (double)sum / weightSum );
+
+                setRowValue( 4, "Средний балл", avg );
+            }
+
+            @Override
+            public void onCancelled( @NonNull DatabaseError e )
+            {
+            }
+        } );
     }
 
     @Override

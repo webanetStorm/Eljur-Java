@@ -44,11 +44,13 @@ public class ScheduleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
     {
         if ( viewType == TYPE_LESSON )
         {
-            return new LessonViewHolder( LayoutInflater.from( parent.getContext() ).inflate( R.layout.item_schedule_lesson, parent, false ) );
+            return new LessonViewHolder( LayoutInflater.from( parent.getContext() )
+                    .inflate( R.layout.item_schedule_lesson, parent, false ) );
         }
         else
         {
-            return new BreakViewHolder( LayoutInflater.from( parent.getContext() ).inflate( R.layout.item_schedule_break, parent, false ) );
+            return new BreakViewHolder( LayoutInflater.from( parent.getContext() )
+                    .inflate( R.layout.item_schedule_break, parent, false ) );
         }
     }
 
@@ -59,12 +61,10 @@ public class ScheduleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
         {
             Schedule item = (Schedule)items.get( position );
             LessonViewHolder lessonHolder = (LessonViewHolder)holder;
-
             lessonHolder.time.setText( String.format( "%s - %s", item.getStartTime(), item.getEndTime() ) );
             lessonHolder.classroom.setText( item.getClassroom() );
             lessonHolder.subjectName.setText( item.getSubjectName() );
             lessonHolder.teacherName.setText( item.getTeacherName() );
-
             if ( item.getHomework() != null && !item.getHomework().isEmpty() )
             {
                 lessonHolder.homework.setText( item.getHomework() );
@@ -74,23 +74,17 @@ public class ScheduleAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolde
             {
                 lessonHolder.homework.setVisibility( View.GONE );
             }
-
             lessonHolder.grades.removeAllViews();
             LayoutInflater inflater = LayoutInflater.from( holder.itemView.getContext() );
-
             for ( Grade grade : item.getGrades() )
             {
                 View gradeBlock = inflater.inflate( R.layout.item_grade_block, lessonHolder.grades, false );
-
                 TextView tvValue = gradeBlock.findViewById( R.id.tvGradeValue );
                 TextView tvWeight = gradeBlock.findViewById( R.id.tvGradeWeight );
-
                 tvValue.setText( String.valueOf( grade.getValue() ) );
                 tvWeight.setText( String.valueOf( grade.getWeight() ) );
-
                 lessonHolder.grades.addView( gradeBlock );
             }
-
             lessonHolder.grades.setVisibility( item.getGrades().isEmpty() ? View.GONE : View.VISIBLE );
         }
         else

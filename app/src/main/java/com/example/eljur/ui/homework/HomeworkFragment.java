@@ -119,6 +119,11 @@ public class HomeworkFragment extends Fragment
                 List<String> sortedDates = new ArrayList<>( map.keySet() );
                 Collections.sort( sortedDates );
 
+                if ( !showUpcoming )
+                {
+                    Collections.reverse( sortedDates );
+                }
+
                 HomeworkAdapter adapter = new HomeworkAdapter( sortedDates, map );
                 binding.rvHomeworks.setLayoutManager( new LinearLayoutManager( requireContext() ) );
                 binding.rvHomeworks.setAdapter( adapter );

@@ -1,8 +1,0 @@
-services:
-  app:
-    build: .
-    container_name: eljur-app
-    volumes:
-      - .:/app
-    stdin_open: true
-    tty: true

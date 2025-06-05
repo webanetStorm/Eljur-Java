@@ -59,7 +59,7 @@ public class ScheduleFragment extends Fragment
         weekPager = binding.vpWeeks;
 
         dbRef = FirebaseDatabase.getInstance().getReference();
-        currentUserId = FirebaseAuth.getInstance().getCurrentUser().getUid();
+        currentUserId = Objects.requireNonNull( FirebaseAuth.getInstance().getCurrentUser() ).getUid();
 
         weekPager.setAdapter( new WeekPagerAdapter( this ) );
         weekPager.setCurrentItem( 1000, false );
@@ -90,17 +90,14 @@ public class ScheduleFragment extends Fragment
                 {
                     continue;
                 }
-
                 LocalDate start = LocalDate.parse( term.child( "start_date" ).getValue( String.class ) );
                 LocalDate end = LocalDate.parse( term.child( "end_date" ).getValue( String.class ) );
-
                 if ( ( anyDateOfWeek.isEqual( start ) || anyDateOfWeek.isAfter( start ) ) && ( anyDateOfWeek.isEqual( end ) || anyDateOfWeek.isBefore( end ) ) )
                 {
                     trimester = term.child( "term_number" ).getValue( Integer.class ) + " триместр";
                     break;
                 }
             }
-
             String result = capitalizeFirst( month ) + " " + year + " · " + trimester;
             binding.tvDateIndicator.setText( result );
         } );
@@ -114,7 +111,6 @@ public class ScheduleFragment extends Fragment
     public boolean isDateAllowed( LocalDate date, DataSnapshot academicSnapshot, DataSnapshot holidaysSnapshot )
     {
         boolean allowed = false;
-
         for ( DataSnapshot year : academicSnapshot.getChildren() )
         {
             LocalDate start = LocalDate.parse( year.child( "start_date" ).getValue( String.class ) );
@@ -125,7 +121,6 @@ public class ScheduleFragment extends Fragment
                 break;
             }
         }
-
         if ( holidaysSnapshot.hasChild( date.toString() ) )
         {
             allowed = false;

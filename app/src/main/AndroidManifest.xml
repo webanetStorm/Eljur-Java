@@ -24,5 +24,4 @@
         </activity>
         <activity android:name=".ui.auth.AuthActivity" />
     </application>
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
